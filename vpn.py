@@ -1,4 +1,4 @@
-from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar
+from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
 
 # def callback():
 #     print("clicked")
@@ -33,6 +33,11 @@ def nextStep():
 def execute():
     #TODO:
     print('running')
+
+def showRecData():
+    #TODO:
+    recText.set("test")
+    print('added stuff')
 
 # initialize GUI area
 root = Tk()
@@ -86,7 +91,8 @@ sendSubmit.pack()
 
 # received data
 recLabel = Label(root, text="Received data: ")
-recData = Entry(root)
+recText = StringVar()
+recData = Entry(root, textvariable=recText)
 
 recLabel.pack()
 recData.pack()
@@ -98,4 +104,5 @@ continueButton.pack()
 # Automatic Run
 runButton = Button(root, text='Run program automatically', command=execute)
 runButton.pack()
+showRecData()
 root.mainloop()
