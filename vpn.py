@@ -1,6 +1,6 @@
 from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
-from server import openServer
-from client import clientSend
+import server
+import client
 
 # def callback():
 #     print("clicked")
@@ -18,7 +18,10 @@ def switchMode():
     print('switching', inClientMode)
 
 def submitSecret():
-    #TODO:
+    if inClientMode:
+        client.setSecret(ss_field.get())
+    else: 
+        server.setSecret(ss_field.get())
     print(ss_field.get())
 
 def connectSubmit():
@@ -26,9 +29,9 @@ def connectSubmit():
 
     print(inClientMode)
     if inClientMode:
-        clientSend(hostField.get(), nameIPState.get(), portField.get())
+        client.clientSend(hostField.get(), nameIPState.get(), portField.get())
     else:
-        openServer(portField.get())
+        server.openServer(portField.get())
 
     print(hostField.get(), nameIPState.get(), portField.get())
 
@@ -48,6 +51,10 @@ def showRecData():
     #TODO:
     recText.set("test")
     print('added stuff')
+
+def updateProgramState():
+    #TODO:
+    statusText.set('some update')
 
 # initialize GUI area
 root = Tk()
@@ -118,7 +125,9 @@ runButton = Button(root, text='Run program automatically', command=execute)
 runButton.pack()
 
 # program status
-status = Label(root, text='program state')
+statusText = StringVar()
+statusText.set('program state')
+status = Label(root, textvariable=statusText)
 status.pack()
 
 showRecData()
