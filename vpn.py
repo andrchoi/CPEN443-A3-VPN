@@ -11,9 +11,13 @@ def switchMode():
     global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
+        hostDetails.config(state='disabled')
+        nameOrIP.config(state='disabled')
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
+        hostDetails.config(state='active')
+        nameOrIP.config(state='active')
         inClientMode= True
     print('switching', inClientMode)
 
@@ -41,20 +45,20 @@ def sendData():
 
 def nextStep():
     #TODO:
-    print('Stepping')
+    updateProgramState('stepping')
 
-def execute():
+def executeFull():
     #TODO:
-    print('running')
+    updateProgramState('running')
 
 def showRecData():
     #TODO:
     recText.set("test")
     print('added stuff')
 
-def updateProgramState():
+def updateProgramState(status):
     #TODO:
-    statusText.set('some update')
+    statusText.set('some update ' + status)
 
 # initialize GUI area
 root = Tk()
@@ -80,7 +84,6 @@ nameIPState = IntVar()
 nameOrIP = Checkbutton(root, text='Check if submitting IP address', variable=nameIPState)
 portLabel = Label(root, text='Enter port number:')
 portField = Entry(root)
-connectSubmit = Button(root, text='Submit connection information', command=connectSubmit)
 
 connectInfo.pack()
 hostDetails.pack()
@@ -88,25 +91,24 @@ hostField.pack()
 nameOrIP.pack()
 portLabel.pack()
 portField.pack()
-connectSubmit.pack()
 
 # shared secret field
-ss_label = Label(root, text="Shared Secret Value: ")
+ss_label = Label(root, text="Shared Secret Values: ")
 ss_field = Entry(root)
-ss_submit = Button(root, text="Submit Value", command=submitSecret)
 
 ss_label.pack()
 ss_field.pack()
-ss_submit.pack()
+
+# submit connection details
+connectSubmit = Button(root, text='Submit Connection Details', command=connectSubmit)
+connectSubmit.pack()
 
 # data to send
 sendLabel = Label(root, text="Data to send: ")
 sendField = Entry(root)
-sendSubmit = Button(root, text="Submit Value", command=sendData)
 
 sendLabel.pack()
 sendField.pack()
-sendSubmit.pack()
 
 # received data
 recLabel = Label(root, text="Received data: ")
@@ -117,11 +119,11 @@ recLabel.pack()
 recData.pack()
 
 # Continue button
-continueButton = Button(root, text='Step through program', command=nextStep)
+continueButton = Button(root, text='Continue (step through)', command=nextStep)
 continueButton.pack()
 
 # Automatic Run
-runButton = Button(root, text='Run program automatically', command=execute)
+runButton = Button(root, text='Run automatically', command=executeFull)
 runButton.pack()
 
 # program status
