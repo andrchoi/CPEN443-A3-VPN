@@ -126,11 +126,11 @@ recLabel.pack()
 recData.pack()
 
 # Continue button
-continueButton = Button(root, text='Continue (step through)', command=nextStep)
+continueButton = Button(root, text='Step Through Send', command=nextStep)
 continueButton.pack()
 
 # Automatic Run
-runButton = Button(root, text='Run automatically', command=executeFull)
+runButton = Button(root, text='Send Automatically', command=executeFull)
 runButton.pack()
 
 # program status
