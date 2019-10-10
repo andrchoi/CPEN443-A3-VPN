@@ -68,7 +68,7 @@ class Server(dh_algo.DH_Endpoint):
                         self.generate_full_key(partial_key)
                         self.flag_generated_key = True
                     except:
-                        print(data)
+                        print(self.decrypt_message(data))
     
     def send(self, partial_key): # sends the partial key
             flagged_partial_key = {'p':'partial_key'}
