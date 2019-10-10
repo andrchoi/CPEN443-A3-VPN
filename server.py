@@ -23,28 +23,69 @@ Your UI must allow the TA to see what data is actually sent and received over th
 to step through these processes using a “Continue” button.
 '''
 import socket
+import json
 import dh_algo
+import sympy
 
 sharedSecret = ''
 
 def setSecret(value):
     global sharedSecret
     sharedSecret = value
-    print('server',sharedSecret)
 
-def openServer(port):
-    HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-    PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+def get_portnum():
+    portnum = input("Enter port number:")
+    return portnum
 
-    # with is constructor and at end of with it is a destructor
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT)) #listening at localhost
-        s.listen()
-        conn, addr = s.accept() # Only if client is run
-        with conn:
-            print('Connected by', addr)
-            while True:
-                data = conn.recv(1024) # Limit message size to 1024 bytes?
-                if not data: # At end of message break
-                    break
-                conn.sendall(data) # echos the data TODO change this to a reply
+PORT = get_portnum()
+
+class Server(dh_algo.DH_Endpoint):
+    def __init__(self, shared_secret_value):
+        public_key1 = sympy.nextprime(shared_secret_value)
+        public_key2 = sympy.nextprime(public_key1//2)
+        super().__init__(public_key1, public_key2)
+        self.flag_generated_key = False
+        self.conn = None
+
+
+    def run(self): # listen and print out messages
+        # with is constructor and at end of with it is a destructor
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('',PORT)) #listening at localhost
+            s.listen()
+            conn, addr = s.accept() # Only if client is run
+            self.conn = conn
+            with conn:
+                print('Connected by', addr)
+                while True:
+                    data = conn.recv(1024) # Limit message size to 1024 bytes?
+                    if not data: # At end of message break
+                        break
+                    try:
+                        data_loaded = json.loads(data) #data loaded
+                        partial_key = data_loaded.get('p')
+                        self.generate_full_key(partial_key)
+                        self.flag_generated_key = True
+                    except:
+                        print(data)
+    
+    def send(self, partial_key): # sends the partial key
+            flagged_partial_key = {'p':'partial_key'}
+            data_string = json.dumps(flagged_partial_key) #data serialized
+            self.conn.sendall(data_string)
+    
+    def send_encrypted(self, message):
+        if self.flag_generated_key:
+            encrypted_message = self.encrypt_message(message)
+            self.conn.sendall(encrypted_message)
+        else:
+            print("Enter Shared Value first")
+
+shared_secret_value = input("Enter Shared Secret Value:") #p
+
+server = Server(shared_secret_value)
+server.run()
+partial_key = server.generate_partial_key()
+server.send(partial_key)
+message = input("Enter message:")
+server.send_encrypted(message)
