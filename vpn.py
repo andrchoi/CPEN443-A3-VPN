@@ -1,4 +1,6 @@
 from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
+import server
+import client
 
 # def callback():
 #     print("clicked")
@@ -6,21 +8,32 @@ from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, S
 
 def switchMode():
     #TODO: implement ui switching
+    global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
-        inClientMode = True
+        inClientMode= True
     print('switching', inClientMode)
 
 def submitSecret():
-    #TODO:
+    if inClientMode:
+        client.setSecret(ss_field.get())
+    else: 
+        server.setSecret(ss_field.get())
     print(ss_field.get())
 
 def connectSubmit():
     #TODO:
-    print(hostField.get(), nameIPState.get(), portField.get())\
+
+    print(inClientMode)
+    if inClientMode:
+        client.clientSend(hostField.get(), nameIPState.get(), portField.get())
+    else:
+        server.openServer(portField.get())
+
+    print(hostField.get(), nameIPState.get(), portField.get())
 
 def sendData():
     #TODO:
@@ -39,6 +52,10 @@ def showRecData():
     recText.set("test")
     print('added stuff')
 
+def updateProgramState():
+    #TODO:
+    statusText.set('some update')
+
 # initialize GUI area
 root = Tk()
 root.title('Team AMAZ VPN')
@@ -48,7 +65,7 @@ inClientMode = True
 
 # create Toggle button
 labelText="VPN in client mode"
-toggleText="Go to server mode"
+toggleText="Toggle mode"
 modeLabel = Label(root, text=labelText)
 toggle_button = Button(root, text=toggleText, command=switchMode)
 
@@ -61,6 +78,7 @@ hostDetails = Label(root, text='Host Name/IP')
 hostField = Entry(root)
 nameIPState = IntVar()
 nameOrIP = Checkbutton(root, text='Check if submitting IP address', variable=nameIPState)
+portLabel = Label(root, text='Enter port number:')
 portField = Entry(root)
 connectSubmit = Button(root, text='Submit connection information', command=connectSubmit)
 
@@ -68,6 +86,7 @@ connectInfo.pack()
 hostDetails.pack()
 hostField.pack()
 nameOrIP.pack()
+portLabel.pack()
 portField.pack()
 connectSubmit.pack()
 
@@ -106,7 +125,9 @@ runButton = Button(root, text='Run program automatically', command=execute)
 runButton.pack()
 
 # program status
-status = Label(root, text='program state')
+statusText = StringVar()
+statusText.set('program state')
+status = Label(root, textvariable=statusText)
 status.pack()
 
 showRecData()
