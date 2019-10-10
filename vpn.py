@@ -2,10 +2,6 @@ from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, S
 import server
 # import client
 
-# def callback():
-#     print("clicked")
-
-
 def switchMode():
     #TODO: implement ui switching
     global inClientMode
@@ -42,20 +38,12 @@ def sendData():
 
 def nextStep():
     #TODO:
-    updateProgramState('stepping')
+    print('stepping')
 
 def executeFull():
     #TODO:
-    updateProgramState('running')
+    print('running')
 
-def showRecData():
-    #TODO:
-    recText.set("test")
-    print('added stuff')
-
-def updateProgramState(status):
-    #TODO:
-    statusText.set('some update ' + status)
 
 # initialize GUI area
 root = Tk()
@@ -132,5 +120,4 @@ statusText.set('program state')
 status = Label(root, textvariable=statusText)
 status.pack()
 
-showRecData()
 root.mainloop()

@@ -26,7 +26,7 @@ import socket
 import json
 import dh_algo
 import sympy
-from vpn import showRecData, updateProgramState
+import updateGUI
 
 class Server(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -56,6 +56,7 @@ class Server(dh_algo.DH_Endpoint):
                         self.generate_full_key(partial_key)
                         self.flag_generated_key = True
                     except:
+                        #TODO:
                         print(self.decrypt_message(data))
     
     def send(self, partial_key): # sends the partial key
@@ -72,10 +73,17 @@ class Server(dh_algo.DH_Endpoint):
 
 
 def openServer(sharedSecret, port):
+    global server
     server = Server(sharedSecret)
     server.run(port)
     partial_key = server.generate_partial_key()
     server.send(partial_key)
+
+def encryptAndSend(server, message):
+    global server
+    server.send_encrypted(message)
+
+server = None
     
 # server = Server(shared_secret_value)
 # server.run()
