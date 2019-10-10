@@ -46,28 +46,31 @@ class Server(dh_algo.DH_Endpoint):
             self.conn = conn
             with conn:
                 print('Connected by', addr)
+                partial_key = self.generate_partial_key()
+                self.send(partial_key)
                 while True:
                     data = conn.recv(1024) # Limit message size to 1024 bytes?
                     if not data: # At end of message break
                         break
                     try:
-                        data_loaded = json.loads(data) #data loaded
+                        data_loaded = json.loads(data.decode('utf-8')) #data loaded
                         partial_key = data_loaded.get('p')
                         self.generate_full_key(partial_key)
                         self.flag_generated_key = True
+                        print("server has created key")
                     except:
                         #TODO:
                         print(self.decrypt_message(data))
     
     def send(self, partial_key): # sends the partial key
-            flagged_partial_key = {'p':'partial_key'}
-            data_string = json.dumps(flagged_partial_key) #data serialized
+            flagged_partial_key = {'p':partial_key}
+            data_string = json.dumps(flagged_partial_key).encode('utf-8') #data serialized
             self.conn.sendall(data_string)
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
             encrypted_message = self.encrypt_message(message)
-            self.conn.sendall(encrypted_message)
+            self.conn.sendall(encrypted_message.encode('utf-8'))
         else:
             print("Enter Shared Value first")
 
