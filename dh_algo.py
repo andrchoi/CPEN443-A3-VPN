@@ -5,11 +5,13 @@ private_key is secret_value
 public_key2 is p
 partial_key is A
 '''
+import sympy 
+
 class DH_Endpoint(object):
-    def __init__(self, public_key1, public_key2, private_key):
+    def __init__(self, public_key1, public_key2):
         self.public_key1 = public_key1
         self.public_key2 = public_key2
-        self.private_key = private_key
+        self.private_key = sympy.randprime(100,1000)
         self.full_key = None
         
     def generate_partial_key(self):
@@ -27,7 +29,7 @@ class DH_Endpoint(object):
         encrypted_message = "" #in form of a string 
         key = self.full_key
         for c in message:
-            encrypted_message += chr(ord(c)+key) #simple encryption by adding ket to ASCII value of character
+            encrypted_message += chr(ord(c)+key) #simple encryption by adding key to ASCII value of character
         return encrypted_message
     
     def decrypt_message(self, encrypted_message):
@@ -38,8 +40,8 @@ class DH_Endpoint(object):
         return decrypted_message
 
 if __name__ == "__main__":
-    zach = DH_Endpoint(1294,79,54)
-    alex = DH_Endpoint(1294,79,31)
+    zach = DH_Endpoint(1294,79)
+    alex = DH_Endpoint(1294,79)
     zach_pk = zach.generate_partial_key()
     alex_pk = alex.generate_partial_key()
     full_key = zach.generate_full_key(alex_pk)
