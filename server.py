@@ -35,6 +35,7 @@ def setSecret(value):
 
 def get_portnum():
     portnum = input("Enter port number:")
+    portnum = int(portnum)
     return portnum
 
 PORT = get_portnum()
@@ -51,7 +52,7 @@ class Server(dh_algo.DH_Endpoint):
     def run(self): # listen and print out messages
         # with is constructor and at end of with it is a destructor
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('',PORT)) #listening at localhost
+            s.bind(('',PORT))
             s.listen()
             conn, addr = s.accept() # Only if client is run
             self.conn = conn
