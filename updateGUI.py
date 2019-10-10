@@ -1,8 +1,8 @@
 import vpn
 
-def showRecData():
+def showRecData(data):
     #TODO:
-    vpn.recText.set("test")
+    vpn.recText.set(data)
     print('added stuff')
 
 def updateProgramState(status):

@@ -60,6 +60,7 @@ class Server(dh_algo.DH_Endpoint):
                         print("server has created key")
                     except:
                         #TODO:
+                        updateGUI.showRecData(self.decrypt_message(data))
                         print(self.decrypt_message(data))
     
     def send(self, partial_key): # sends the partial key
