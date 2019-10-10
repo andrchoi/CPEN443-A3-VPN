@@ -104,5 +104,10 @@ continueButton.pack()
 # Automatic Run
 runButton = Button(root, text='Run program automatically', command=execute)
 runButton.pack()
+
+# program status
+status = Label(root, text='program state')
+status.pack()
+
 showRecData()
 root.mainloop()
