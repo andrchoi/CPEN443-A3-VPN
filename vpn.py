@@ -28,6 +28,10 @@ def submitSecret():
         server.setSecret(ss_field.get())
     print(ss_field.get())
 
+def connectStep():
+    #TODO:
+    print('step')
+
 def connectSubmit():
     #TODO:
 
@@ -100,7 +104,10 @@ ss_label.pack()
 ss_field.pack()
 
 # submit connection details
+connectStep = Button(root, text='Step Through Connection', command=connectStep)
 connectSubmit = Button(root, text='Submit Connection Details', command=connectSubmit)
+
+connectStep.pack()
 connectSubmit.pack()
 
 # data to send
