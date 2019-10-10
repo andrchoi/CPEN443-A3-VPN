@@ -1,4 +1,6 @@
 from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
+from server import openServer
+from client import clientSend
 
 # def callback():
 #     print("clicked")
@@ -6,12 +8,13 @@ from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, S
 
 def switchMode():
     #TODO: implement ui switching
+    global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
-        inClientMode = True
+        inClientMode= True
     print('switching', inClientMode)
 
 def submitSecret():
@@ -20,7 +23,14 @@ def submitSecret():
 
 def connectSubmit():
     #TODO:
-    print(hostField.get(), nameIPState.get(), portField.get())\
+
+    print(inClientMode)
+    if inClientMode:
+        clientSend(hostField.get(), nameIPState.get(), portField.get())
+    else:
+        openServer(portField.get())
+
+    print(hostField.get(), nameIPState.get(), portField.get())
 
 def sendData():
     #TODO:
@@ -48,7 +58,7 @@ inClientMode = True
 
 # create Toggle button
 labelText="VPN in client mode"
-toggleText="Go to server mode"
+toggleText="Toggle mode"
 modeLabel = Label(root, text=labelText)
 toggle_button = Button(root, text=toggleText, command=switchMode)
 
@@ -61,6 +71,7 @@ hostDetails = Label(root, text='Host Name/IP')
 hostField = Entry(root)
 nameIPState = IntVar()
 nameOrIP = Checkbutton(root, text='Check if submitting IP address', variable=nameIPState)
+portLabel = Label(root, text='Enter port number:')
 portField = Entry(root)
 connectSubmit = Button(root, text='Submit connection information', command=connectSubmit)
 
@@ -68,6 +79,7 @@ connectInfo.pack()
 hostDetails.pack()
 hostField.pack()
 nameOrIP.pack()
+portLabel.pack()
 portField.pack()
 connectSubmit.pack()
 
