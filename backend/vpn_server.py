@@ -25,26 +25,49 @@ to step through these processes using a “Continue” button.
 import socket
 import dh_algo
 
-sharedSecret = ''
+HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
+PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-    print('server',sharedSecret)
+class Server(dh_algo.DH_Endpoint):
+    def __init__(self, has_key):
+        self.has_key = False
 
-def openServer(port):
-    HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
-    PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
+    def run(self): # listen and print out messages
+        # with is constructor and at end of with it is a destructor
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind((HOST, PORT)) #listening at localhost
+            s.listen()
+            conn, addr = s.accept() # Only if client is run
+            with conn:
+                print('Connected by', addr)
+                while True:
+                    data = conn.recv(1024) # Limit message size to 1024 bytes?
+                    if not data: # At end of message break
+                        break
+                    print(data)
+                    partial_key = data
+                    # conn.sendall(data) # echos the data TODO change this to a print
+    
+    def send(self, message): # sends the partial key
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            s.sendall(message)
+            data = s.recv(1024)
+        print('Received', repr(data)) #repr returns string of data
+    
+    def send_encrypted(self, message):
+        encrypted_message = self.encrypt_message(message)
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            s.sendall(encrypted_message)
+            data = s.recv(1024)
+        print('Received', repr(data)) #repr returns string of data
 
-    # with is constructor and at end of with it is a destructor
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind((HOST, PORT)) #listening at localhost
-        s.listen()
-        conn, addr = s.accept() # Only if client is run
-        with conn:
-            print('Connected by', addr)
-            while True:
-                data = conn.recv(1024) # Limit message size to 1024 bytes?
-                if not data: # At end of message break
-                    break
-                conn.sendall(data) # echos the data TODO change this to a reply
+public_key1 = input("Enter Shared Secret Value 1:") #g
+public_key2 = input("Enter Shared Secret Value 2:") #p
+private_key = input("Enter Private Value:")
+
+server = Server(public_key1,public_key2,private_key)
+partial_key = server.generate_partial_key()
+server.send(partial_key)
+server
