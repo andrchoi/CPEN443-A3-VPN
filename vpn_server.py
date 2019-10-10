@@ -23,14 +23,26 @@ Your UI must allow the TA to see what data is actually sent and received over th
 to step through these processes using a “Continue” button.
 '''
 import socket
+import json
 import dh_algo
 
 HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
 PORT = 65432        # Port to listen on (non-privileged ports are > 1023)
 
+
+def get_hostname():
+    hostname = input("Enter Host name:")
+    return hostname
+def get_portnum():
+    portnum = input("Enter port number:")
+    return portnum
+
+# HOST = '127.0.0.1'  # The server's hostname or IP address
+# PORT = 65432        # The port used by the server
+HOST = get_hostname()
+PORT = get_portnum()
 class Server(dh_algo.DH_Endpoint):
-    def __init__(self, has_key):
-        self.has_key = False
+    pass
 
     def run(self): # listen and print out messages
         # with is constructor and at end of with it is a destructor
@@ -45,15 +57,19 @@ class Server(dh_algo.DH_Endpoint):
                     if not data: # At end of message break
                         break
                     print(data)
+                    if
                     partial_key = data
+                    data_loaded = json.loads(data) #data loaded
                     # conn.sendall(data) # echos the data TODO change this to a print
     
-    def send(self, message): # sends the partial key
+    def send(self, partial_key): # sends the partial key
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((HOST, PORT))
+            s.connect((HOST, PORT)) #HOST, PORT of client
+            flagged_partial_key = {}
+            data_string = json.dumps(partial_key) #data serialized
             s.sendall(message)
-            data = s.recv(1024)
-        print('Received', repr(data)) #repr returns string of data
+            # data = s.recv(1024)
+        # print('Received', repr(data)) #repr returns string of data
     
     def send_encrypted(self, message):
         encrypted_message = self.encrypt_message(message)
