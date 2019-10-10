@@ -26,19 +26,7 @@ import socket
 import json
 import dh_algo
 import sympy
-
-sharedSecret = ''
-
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-
-def get_portnum():
-    portnum = input("Enter port number:")
-    portnum = int(portnum)
-    return portnum
-
-PORT = get_portnum()
+from vpn import showRecData, updateProgramState
 
 class Server(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -49,10 +37,10 @@ class Server(dh_algo.DH_Endpoint):
         self.conn = None
 
 
-    def run(self): # listen and print out messages
+    def run(self, port): # listen and print out messages
         # with is constructor and at end of with it is a destructor
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('',PORT))
+            s.bind(('',port))
             s.listen()
             conn, addr = s.accept() # Only if client is run
             self.conn = conn
@@ -82,11 +70,16 @@ class Server(dh_algo.DH_Endpoint):
         else:
             print("Enter Shared Value first")
 
-shared_secret_value = input("Enter Shared Secret Value:") #p
 
-server = Server(shared_secret_value)
-server.run()
-partial_key = server.generate_partial_key()
-server.send(partial_key)
-message = input("Enter message:")
-server.send_encrypted(message)
+def openServer(sharedSecret, port):
+    server = Server(sharedSecret)
+    server.run(port)
+    partial_key = server.generate_partial_key()
+    server.send(partial_key)
+    
+# server = Server(shared_secret_value)
+# server.run()
+# partial_key = server.generate_partial_key()
+# server.send(partial_key)
+# message = input("Enter message:")
+# server.send_encrypted(message)

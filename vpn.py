@@ -1,6 +1,6 @@
 from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
 import server
-import client
+# import client
 
 # def callback():
 #     print("clicked")
@@ -21,25 +21,18 @@ def switchMode():
         inClientMode= True
     print('switching', inClientMode)
 
-def submitSecret():
-    if inClientMode:
-        client.setSecret(ss_field.get())
-    else: 
-        server.setSecret(ss_field.get())
-    print(ss_field.get())
-
 def connectStep():
     #TODO:
     print('step')
 
 def connectSubmit():
     #TODO:
-
     print(inClientMode)
+    
     if inClientMode:
-        client.clientSend(hostField.get(), nameIPState.get(), portField.get())
-    else:
-        server.openServer(portField.get())
+        print('client')
+    else: 
+        server.openServer(int(ss_field.get()), int(portField.get()))
 
     print(hostField.get(), nameIPState.get(), portField.get())
 
