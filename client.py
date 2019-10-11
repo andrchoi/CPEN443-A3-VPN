@@ -2,6 +2,7 @@ import socket
 import json
 import dh_algo
 import sympy
+import aes_algo
 
 
 sharedSecret = ''
@@ -20,6 +21,7 @@ class Client(dh_algo.DH_Endpoint):
         super().__init__(public_key1, public_key2)
         self.flag_generated_key = False
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.aesfunc = None
 
     def authenticate(self): # sends the partial key
         partial_key = self.generate_partial_key()
@@ -60,13 +62,21 @@ class Client(dh_algo.DH_Endpoint):
                     self.generate_full_key(partial_key)
                     self.flag_generated_key = True
                     print("client has created key")
+                    self.aesfunc = aes_algo.Rijndael(self.full_key)
                     break
                 except:
                     print(data)
     
     def communicate(self):
         message = input("Enter message:")
-        self.send_encrypted(message)
+        zeroes_req = 15 - len(message) % 16
+        padded_message = "0" * zeroes_req + "1" + message
+        iterations_num = len(padded_message) // 16
+        ciphertext_message = ""
+        for i in range(iterations_num):
+            partial_plainmessage = padded_message[i * 16:i * 16 + 16]
+            encrypted_partial = self.aesfunc.encrypt(partial_plainmessage)
+            ciphertext_message += encrypted_partial
         s = self.s
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
