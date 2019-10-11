@@ -2,7 +2,8 @@ import socket
 import json
 import dh_algo
 import sympy
-import aes_algo
+# import aes_algo
+from threading import Thread
 
 
 sharedSecret = ''
@@ -43,19 +44,20 @@ class Client(dh_algo.DH_Endpoint):
                 print("error")
     
     def communicate(self):
-        message = input("Enter message:")
-        self.send_encrypted(message)
+        # message = input("Enter message:")
+        # self.send_encrypted(message)
         s = self.s
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                break # at s.close on the connection it closes
+                pass
+                # break # at s.close on the connection it closes
             else:
                 decrypted_msg = self.decrypt_message(data.decode('utf-8'))
                 print(decrypted_msg)
                 # if(decrypted_msg == "goodbye"):
                 #     exit()
-                break
+                # break
             
     def send_encrypted(self, message):
         if self.encrypt_message:
@@ -68,9 +70,14 @@ class Client(dh_algo.DH_Endpoint):
 shared_secret_value = input("Enter Shared Secret Value:") #p
 client = Client(shared_secret_value)
 client.authenticate()
+# while True:
+communicate_thread = Thread(target=client.communicate)
+communicate_thread.start()
+# client.communicate()
+# client.s.close()
 while True:
-    client.communicate()
-client.s.close()
+    message = input("Enter message:")
+    client.send_encrypted(message)
 
 def connectClient(sharedSecret, host, isIPaddr, port):
     global client
@@ -81,10 +88,3 @@ def connectClient(sharedSecret, host, isIPaddr, port):
 def encryptAndSend(server, message):
     global client
     client.send_encrypted(message)
-
-# client = Client(shared_secret_value)
-# partial_key = client.generate_partial_key()
-# client.send(partial_key)
-# message = input("Enter message:")
-# client.send_encrypted(message)
-

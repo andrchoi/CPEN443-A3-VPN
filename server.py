@@ -26,6 +26,7 @@ import socket
 import json
 import dh_algo
 import sympy
+from threading import Thread
 
 
 sharedSecret = ''
@@ -75,12 +76,13 @@ class Server(dh_algo.DH_Endpoint):
         while True:
             data = self.conn.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                break # at s.close on the connection it closes
+                pass
+                # break # at s.close on the connection it closes
             else:
                 print(self.decrypt_message(data.decode('utf-8')))
-                break
-        message = input("Enter message:")
-        self.send_encrypted(message)
+                # break
+        # message = input("Enter message:")
+        # self.send_encrypted(message)
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
@@ -92,10 +94,15 @@ class Server(dh_algo.DH_Endpoint):
 shared_secret_value = input("Enter Shared Secret Value:") #p
 server = Server(shared_secret_value)
 server.authenticate()
+communicate_thread = Thread(target=server.communicate)
+communicate_thread.start()
 while True:
-    server.communicate()
-server.conn.close()
-server.s.close()
+    message = input("Enter message:")
+    server.send_encrypted(message)
+
+# server.communicate()
+# server.conn.close()
+# server.s.close()
 
 # def openServer(sharedSecret, port):
 #     global server
