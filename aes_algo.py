@@ -344,33 +344,33 @@ class Rijndael(object):
         t(32, 24)
         t(32, 32)
 
-if __name__== "__main__":
-    #plaintext message to be sent
-    input_test = input('Enter your message to be encrypted: ')
-
-    #pad from left with 0s then a 1
-    zeroes_req = 15 - len(input_test) % 16
-    padded_input_test = "0" * zeroes_req + "1" + input_test
-
-    #number of 16-char message blocks
-    iterations_num = len(padded_input_test) // 16
-
-    private_key = "1234abc890XYZ456"
-    r = Rijndael(private_key)
-    ciphertext_message = ""
-    padded_plaintext_message = ""
-
-    #encrypt padded message
-    for i in range(iterations_num):
-        partial_plainmessage = padded_input_test[i * 16:i * 16 + 16]
-        encrypted_partial = r.encrypt(partial_plainmessage)
-        ciphertext_message += encrypted_partial
-    print('The encrypted message is: ',ciphertext_message)
-
-    # decrypt padded message and remove padding
-    for i in range(iterations_num):
-        partial_ciphermessage = ciphertext_message[i * 16:i * 16 + 16]
-        decrypted_partial = r.decrypt(partial_ciphermessage)
-        padded_plaintext_message += decrypted_partial
-    padding_stops = padded_plaintext_message.index("1")
-    print('The decrypted message is: ',padded_plaintext_message[padding_stops + 1:])
+# if __name__== "__main__":
+#     #plaintext message to be sent
+#     input_test = input('Enter your message to be encrypted: ')
+#
+#     #pad from left with 0s then a 1
+#     zeroes_req = 15 - len(input_test) % 16
+#     padded_input_test = "0" * zeroes_req + "1" + input_test
+#
+#     #number of 16-char message blocks
+#     iterations_num = len(padded_input_test) // 16
+#
+#     private_key = "1234abc890XYZ456"
+#     r = Rijndael(private_key)
+#     ciphertext_message = ""
+#     padded_plaintext_message = ""
+#
+#     #encrypt padded message
+#     for i in range(iterations_num):
+#         partial_plainmessage = padded_input_test[i * 16:i * 16 + 16]
+#         encrypted_partial = r.encrypt(partial_plainmessage)
+#         ciphertext_message += encrypted_partial
+#     print('The encrypted message is: ',ciphertext_message)
+#
+#     # decrypt padded message and remove padding
+#     for i in range(iterations_num):
+#         partial_ciphermessage = ciphertext_message[i * 16:i * 16 + 16]
+#         decrypted_partial = r.decrypt(partial_ciphermessage)
+#         padded_plaintext_message += decrypted_partial
+#     padding_stops = padded_plaintext_message.index("1")
+#     print('The decrypted message is: ',padded_plaintext_message[padding_stops + 1:])
