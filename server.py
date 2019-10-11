@@ -61,25 +61,21 @@ class Server(dh_algo.DH_Endpoint):
                 break # at s.close on the connection it closes
             try:
                 partial_key_client = int.from_bytes(data, byteorder='little') 
-                print(partial_key_client)
-                self.generate_full_key(partial_key_client)
+                full_key = self.generate_full_key(partial_key_client)
+                print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("server has created key")
-                # self.conn.close()
                 break
             except:
                 print("error")
-                # print(self.decrypt_message(data.decode('utf-8')))
     
     def communicate(self):
         while True:
             data = self.conn.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                # self.conn.close()
                 break # at s.close on the connection it closes
             else:
                 print(self.decrypt_message(data.decode('utf-8')))
-                # self.conn.close()
                 break
         message = input("Enter message:")
         self.send_encrypted(message)
@@ -87,8 +83,7 @@ class Server(dh_algo.DH_Endpoint):
     def send_encrypted(self, message):
         if self.flag_generated_key:
             encrypted_message = self.encrypt_message(message)
-            self.conn.sendall(encrypted_message.encode('utf-8'))
-            # self.conn.close()
+            self.conn.send(encrypted_message.encode('utf-8'))
         else:
             print("Enter Shared Value first")
 
@@ -97,3 +92,5 @@ server = Server(shared_secret_value)
 server.authenticate()
 while True:
     server.communicate()
+server.conn.close()
+server.s.close()

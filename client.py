@@ -2,6 +2,7 @@ import socket
 import json
 import dh_algo
 import sympy
+import aes_algo
 
 sharedSecret = ''
 
@@ -20,27 +21,25 @@ class Client(dh_algo.DH_Endpoint):
         self.flag_generated_key = False
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+
     def authenticate(self): # sends the partial key
         partial_key = self.generate_partial_key()
-        print(partial_key)
         s = self.s
         s.connect((HOST, PORT)) #HOST, PORT of client
         s.send(bytes([partial_key]))
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                # s.close()
                 break
             try:
                 partial_key_server = int.from_bytes(data, byteorder='little') 
-                self.generate_full_key(partial_key_server)
+                full_key = self.generate_full_key(partial_key_server)
+                print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("client has created key")
                 break
             except:
                 print("error")
-                # s.close()
-                # print(self.decrypt_message(data.decode('utf-8')))
     
     def communicate(self):
         message = input("Enter message:")
@@ -49,18 +48,18 @@ class Client(dh_algo.DH_Endpoint):
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                # s.close()
                 break # at s.close on the connection it closes
             else:
-                print(self.decrypt_message(data.decode('utf-8')))
-                # s.close()
+                decrypted_msg = self.decrypt_message(data.decode('utf-8'))
+                print(decrypted_msg)
+                if(decrypted_msg == "goodbye"):
+                    exit()
                 break
             
     def send_encrypted(self, message):
         if self.encrypt_message:
             encrypted_message = self.encrypt_message(message)
-            self.s.sendall(encrypted_message.encode('utf-8'))
-            # self.s.close()
+            self.s.send(encrypted_message.encode('utf-8'))
         else:
             print("Enter Shared Value first")
 
@@ -69,3 +68,4 @@ client = Client(shared_secret_value)
 client.authenticate()
 while True:
     client.communicate()
+client.s.close()
