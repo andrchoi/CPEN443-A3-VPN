@@ -2,59 +2,52 @@ from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, S
 import server
 import client
 
-# def callback():
-#     print("clicked")
-
-
 def switchMode():
     #TODO: implement ui switching
     global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
+        hostDetails.config(state='disabled')
+        nameOrIP.config(state='disabled')
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
+        hostDetails.config(state='active')
+        nameOrIP.config(state='active')
         inClientMode= True
     print('switching', inClientMode)
 
-def submitSecret():
-    if inClientMode:
-        client.setSecret(ss_field.get())
-    else: 
-        server.setSecret(ss_field.get())
-    print(ss_field.get())
+def connectStep():
+    #TODO:
+    print('step')
 
 def connectSubmit():
     #TODO:
-
     print(inClientMode)
+    
     if inClientMode:
-        client.clientSend(hostField.get(), nameIPState.get(), portField.get())
-    else:
-        server.openServer(portField.get())
+        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()))
+    else: 
+        server.openServer(int(ss_field.get()), int(portField.get()))
 
     print(hostField.get(), nameIPState.get(), portField.get())
 
 def sendData():
     #TODO:
+    if inClientMode:
+        print('send client')
+    else:
+        server.encryptAndSend(sendField.get())
     print(sendField.get())
 
 def nextStep():
     #TODO:
-    print('Stepping')
+    print('stepping')
 
-def execute():
+def executeFull():
     #TODO:
     print('running')
 
-def showRecData():
-    #TODO:
-    recText.set("test")
-    print('added stuff')
-
-def updateProgramState():
-    #TODO:
-    statusText.set('some update')
 
 # initialize GUI area
 root = Tk()
@@ -80,7 +73,6 @@ nameIPState = IntVar()
 nameOrIP = Checkbutton(root, text='Check if submitting IP address', variable=nameIPState)
 portLabel = Label(root, text='Enter port number:')
 portField = Entry(root)
-connectSubmit = Button(root, text='Submit connection information', command=connectSubmit)
 
 connectInfo.pack()
 hostDetails.pack()
@@ -88,25 +80,27 @@ hostField.pack()
 nameOrIP.pack()
 portLabel.pack()
 portField.pack()
-connectSubmit.pack()
 
 # shared secret field
-ss_label = Label(root, text="Shared Secret Value: ")
+ss_label = Label(root, text="Shared Secret Values: ")
 ss_field = Entry(root)
-ss_submit = Button(root, text="Submit Value", command=submitSecret)
 
 ss_label.pack()
 ss_field.pack()
-ss_submit.pack()
+
+# submit connection details
+connectStep = Button(root, text='Step Through Connection', command=connectStep)
+connectSubmit = Button(root, text='Submit Connection Details', command=connectSubmit)
+
+connectStep.pack()
+connectSubmit.pack()
 
 # data to send
 sendLabel = Label(root, text="Data to send: ")
 sendField = Entry(root)
-sendSubmit = Button(root, text="Submit Value", command=sendData)
 
 sendLabel.pack()
 sendField.pack()
-sendSubmit.pack()
 
 # received data
 recLabel = Label(root, text="Received data: ")
@@ -117,11 +111,11 @@ recLabel.pack()
 recData.pack()
 
 # Continue button
-continueButton = Button(root, text='Step through program', command=nextStep)
+continueButton = Button(root, text='Step Through Send', command=nextStep)
 continueButton.pack()
 
 # Automatic Run
-runButton = Button(root, text='Run program automatically', command=execute)
+runButton = Button(root, text='Send Automatically', command=executeFull)
 runButton.pack()
 
 # program status
@@ -130,5 +124,4 @@ statusText.set('program state')
 status = Label(root, textvariable=statusText)
 status.pack()
 
-showRecData()
 root.mainloop()
