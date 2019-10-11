@@ -3,12 +3,6 @@ import json
 import dh_algo
 import sympy
 
-sharedSecret = ''
-
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-
 # def get_hostname():
 #     hostname = input("Enter Host name:")
 #     return hostname
@@ -16,8 +10,8 @@ def setSecret(value):
 #     portnum = input("Enter port number:")
 #     return portnum
 
-HOST = 'localhost'
-PORT = 2000
+# HOST = 'localhost'
+# PORT = 2000
 
 class Client(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -27,10 +21,10 @@ class Client(dh_algo.DH_Endpoint):
         self.flag_generated_key = False
         self.s = None
 
-    def send(self, partial_key): # sends the partial key
+    def send(self, host, port, partial_key): # sends the partial key
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             self.s = s
-            s.connect((HOST, PORT)) #HOST, PORT of client
+            s.connect((host, port)) #HOST, PORT of client
             flagged_partial_key = {"p":partial_key}
             flagged_partial_key = json.dumps(flagged_partial_key).encode('utf-8') #data serialized
             s.send(flagged_partial_key)
@@ -57,11 +51,19 @@ class Client(dh_algo.DH_Endpoint):
         else:
             print("Enter Shared Value first")
 
-shared_secret_value = input("Enter Shared Secret Value:") #p
+def connectClient(sharedSecret, host, isIPaddr, port):
+    global client
+    client = Client(sharedSecret)
+    partial_key = client.generate_partial_key()
+    client.send(host, port, partial_key)
 
-client = Client(shared_secret_value)
-partial_key = client.generate_partial_key()
-client.send(partial_key)
-message = input("Enter message:")
-client.send_encrypted(message)
+def encryptAndSend(server, message):
+    global client
+    client.send_encrypted(message)
+
+# client = Client(shared_secret_value)
+# partial_key = client.generate_partial_key()
+# client.send(partial_key)
+# message = input("Enter message:")
+# client.send_encrypted(message)
 

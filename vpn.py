@@ -1,6 +1,6 @@
 from tkinter import Tk, Frame, Button, Label, Entry, Checkbutton, IntVar, END, StringVar
 import server
-# import client
+import client
 
 def switchMode():
     #TODO: implement ui switching
@@ -26,7 +26,7 @@ def connectSubmit():
     print(inClientMode)
     
     if inClientMode:
-        print('client')
+        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()))
     else: 
         server.openServer(int(ss_field.get()), int(portField.get()))
 
