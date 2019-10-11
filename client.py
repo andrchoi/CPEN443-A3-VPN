@@ -4,6 +4,7 @@ import dh_algo
 import sympy
 import aes_algo
 
+
 sharedSecret = ''
 
 def setSecret(value):
@@ -52,8 +53,8 @@ class Client(dh_algo.DH_Endpoint):
             else:
                 decrypted_msg = self.decrypt_message(data.decode('utf-8'))
                 print(decrypted_msg)
-                if(decrypted_msg == "goodbye"):
-                    exit()
+                # if(decrypted_msg == "goodbye"):
+                #     exit()
                 break
             
     def send_encrypted(self, message):
@@ -63,9 +64,27 @@ class Client(dh_algo.DH_Endpoint):
         else:
             print("Enter Shared Value first")
 
+
 shared_secret_value = input("Enter Shared Secret Value:") #p
 client = Client(shared_secret_value)
 client.authenticate()
 while True:
     client.communicate()
 client.s.close()
+
+def connectClient(sharedSecret, host, isIPaddr, port):
+    global client
+    client = Client(sharedSecret)
+    partial_key = client.generate_partial_key()
+    client.send(host, port, partial_key)
+
+def encryptAndSend(server, message):
+    global client
+    client.send_encrypted(message)
+
+# client = Client(shared_secret_value)
+# partial_key = client.generate_partial_key()
+# client.send(partial_key)
+# message = input("Enter message:")
+# client.send_encrypted(message)
+

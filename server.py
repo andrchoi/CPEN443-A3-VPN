@@ -27,6 +27,7 @@ import json
 import dh_algo
 import sympy
 
+
 sharedSecret = ''
 
 def setSecret(value):
@@ -39,6 +40,7 @@ def get_portnum():
     return portnum
 
 PORT = 2003
+#import updateGUI
 
 class Server(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -94,3 +96,16 @@ while True:
     server.communicate()
 server.conn.close()
 server.s.close()
+
+# def openServer(sharedSecret, port):
+#     global server
+#     server = Server(sharedSecret)
+#     server.run(port)
+#     partial_key = server.generate_partial_key()
+#     server.send(partial_key)
+
+# def encryptAndSend(message):
+#     global server
+#     server.send_encrypted(message)
+
+# server = None
