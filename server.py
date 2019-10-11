@@ -27,6 +27,7 @@ import json
 import dh_algo
 import sympy
 import aes_algo
+from threading import Thread
 
 
 sharedSecret = ''
@@ -86,7 +87,7 @@ class Server(dh_algo.DH_Endpoint):
             data = self.conn.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
                 print('no data')
-                break # at s.close on the connection it closes
+                # break # at s.close on the connection it closes
             else:
                 decoded_data = data.decode('utf-8')
                 iterations_decrypt = len(decoded_data) // 16
@@ -98,9 +99,6 @@ class Server(dh_algo.DH_Endpoint):
                 padding_stops = padded_plaintext_message.index("1")
                 # print(decoded_data)
                 print(padded_plaintext_message[padding_stops + 1:])
-                break
-        message = input("Enter message:")
-        self.send_encrypted(message)
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
@@ -119,10 +117,14 @@ class Server(dh_algo.DH_Endpoint):
 shared_secret_value = input("Enter Shared Secret Value:") #p
 server = Server(shared_secret_value)
 server.authenticate()
+communicate_thread = Thread(target=server.communicate)
+communicate_thread.start()
 while True:
-    server.communicate()
-server.conn.close()
-server.s.close()
+    message = input("Enter message:")
+    server.send_encrypted(message)
+    # server.communicate()
+# server.conn.close()
+# server.s.close()
 
 # def openServer(sharedSecret, port):
 #     global server
