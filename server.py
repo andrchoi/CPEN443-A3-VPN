@@ -38,7 +38,7 @@ def get_portnum():
     portnum = int(portnum)
     return portnum
 
-PORT = get_portnum()
+PORT = 2003
 
 class Server(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -46,48 +46,54 @@ class Server(dh_algo.DH_Endpoint):
         public_key2 = sympy.nextprime(public_key1//2)
         super().__init__(public_key1, public_key2)
         self.flag_generated_key = False
-        self.conn = None
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.s.bind(('',PORT))
+        self.s.listen()
+        self.conn, addr = self.s.accept()
+        print('Connected by', addr)
 
-
-    def run(self): # listen and print out messages
-        # with is constructor and at end of with it is a destructor
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('',PORT))
-            s.listen()
-            conn, addr = s.accept() # Only if client is run
-            self.conn = conn
-            print('Connected by', addr)
-            partial_key = self.generate_partial_key()
-            self.send(partial_key)
-            while True:
-                data = conn.recv(1024) # Limit message size to 1024 bytes?
-                if not data: # At end of message break
-                    break
-                try:
-                    data_loaded = json.loads(data.decode('utf-8')) #data loaded
-                    partial_key = data_loaded.get('p')
-                    self.generate_full_key(partial_key)
-                    self.flag_generated_key = True
-                    print("server has created key")
-                except:
-                    print(self.decrypt_message(data.decode('utf-8')))
+    def authenticate(self): # listen and print out messages
+        partial_key = self.generate_partial_key()
+        self.conn.send(bytes([partial_key]))
+        while True:
+            data = self.conn.recv(1024) # Limit message size to 1024 bytes?
+            if not data: # At end of message break
+                break # at s.close on the connection it closes
+            try:
+                partial_key_client = int.from_bytes(data, byteorder='little') 
+                print(partial_key_client)
+                self.generate_full_key(partial_key_client)
+                self.flag_generated_key = True
+                print("server has created key")
+                # self.conn.close()
+                break
+            except:
+                print("error")
+                # print(self.decrypt_message(data.decode('utf-8')))
     
-    def send(self, partial_key): # sends the partial key
-            flagged_partial_key = {'p':partial_key}
-            data_string = json.dumps(flagged_partial_key).encode('utf-8') #data serialized
-            self.conn.sendall(data_string)
+    def communicate(self):
+        while True:
+            data = self.conn.recv(1024) # Limit message size to 1024 bytes?
+            if not data: # At end of message break
+                # self.conn.close()
+                break # at s.close on the connection it closes
+            else:
+                print(self.decrypt_message(data.decode('utf-8')))
+                # self.conn.close()
+                break
+        message = input("Enter message:")
+        self.send_encrypted(message)
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
             encrypted_message = self.encrypt_message(message)
             self.conn.sendall(encrypted_message.encode('utf-8'))
-            self.conn.close()
+            # self.conn.close()
         else:
             print("Enter Shared Value first")
 
 shared_secret_value = input("Enter Shared Secret Value:") #p
 server = Server(shared_secret_value)
-server.run()
+server.authenticate()
 while True:
-    message = input("Enter message:")
-    server.send_encrypted(message)
+    server.communicate()
