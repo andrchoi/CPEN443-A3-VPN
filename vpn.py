@@ -34,6 +34,10 @@ def connectSubmit():
 
 def sendData():
     #TODO:
+    if inClientMode:
+        print('send client')
+    else:
+        server.encryptAndSend(sendField.get())
     print(sendField.get())
 
 def nextStep():

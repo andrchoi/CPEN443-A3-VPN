@@ -83,7 +83,7 @@ def openServer(sharedSecret, port):
     partial_key = server.generate_partial_key()
     server.send(partial_key)
 
-def encryptAndSend(server, message):
+def encryptAndSend(message):
     global server
     server.send_encrypted(message)
 
