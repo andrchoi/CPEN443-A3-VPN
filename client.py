@@ -2,8 +2,10 @@ import socket
 import json
 import dh_algo
 import sympy
-# import aes_algo
+import aes_algo
 from threading import Thread
+import hashlib
+import pickle
 
 
 sharedSecret = ''
@@ -13,7 +15,7 @@ def setSecret(value):
     sharedSecret = value
 
 HOST = 'localhost'
-PORT = 2003
+PORT = 2007
 
 class Client(dh_algo.DH_Endpoint):
     def __init__(self, shared_secret_value):
@@ -22,6 +24,7 @@ class Client(dh_algo.DH_Endpoint):
         super().__init__(public_key1, public_key2)
         self.flag_generated_key = False
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.aesfunc = None
 
 
     def authenticate(self): # sends the partial key
@@ -36,46 +39,80 @@ class Client(dh_algo.DH_Endpoint):
             try:
                 partial_key_server = int.from_bytes(data, byteorder='little') 
                 full_key = self.generate_full_key(partial_key_server)
-                print("Full key is {}".format(full_key))
+                if len(full_key) == 16:
+                    pass
+                elif len(full_key) > 16:
+                    full_key = full_key[:16]
+                else:
+                    padded_zeroes_req = 16 - len(full_key)
+                    full_key = "0" * padded_zeroes_req + full_key
+                # print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("client has created key")
+                self.aesfunc = aes_algo.Rijndael(full_key)
                 break
             except:
                 print("error")
+                # s.close()
+                # print(self.decrypt_message(data.decode('utf-8')))
     
     def communicate(self):
-        # message = input("Enter message:")
-        # self.send_encrypted(message)
         s = self.s
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
-                pass
                 # break # at s.close on the connection it closes
+                pass
             else:
-                decrypted_msg = self.decrypt_message(data.decode('utf-8'))
-                print(decrypted_msg)
-                # if(decrypted_msg == "goodbye"):
-                #     exit()
-                # break
-            
+                dict_msg = pickle.loads(data)
+                decoded_data = dict_msg.get('e')
+                hash_msg = dict_msg.get('h')
+                iterations_decrypt = len(decoded_data) // 16
+                padded_plaintext_message = ""
+                for i in range(iterations_decrypt):
+                    partial_ciphermessage = decoded_data[i * 16:i * 16 + 16]
+                    decrypted_partial = self.aesfunc.decrypt(partial_ciphermessage)
+                    padded_plaintext_message += decrypted_partial
+                padding_stops = padded_plaintext_message.index("1")
+                # print(decoded_data)
+                print(padded_plaintext_message[padding_stops + 1:])
+                hashed_aes = hashlib.md5(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
+                # print('hash is {}'.format(hash_msg))
+                # print('aes is {}'.format(hashed_aes))
+                if hashed_aes.hexdigest() == hash_msg:
+                    print("Message integrity confirmed")
+                else:
+                    print("Message tampered")
+
     def send_encrypted(self, message):
-        if self.encrypt_message:
-            encrypted_message = self.encrypt_message(message)
-            self.s.send(encrypted_message.encode('utf-8'))
+        if self.flag_generated_key:
+            hash_msg = hashlib.md5(message.encode('utf-8'))
+            zeroes_req = 15 - len(message) % 16
+            padded_message = "0" * zeroes_req + "1" + message
+            iterations_encrypt = len(padded_message) // 16
+            ciphertext_message = ""
+            for i in range(iterations_encrypt):
+                partial_plainmessage = padded_message[i * 16:i * 16 + 16]
+                encrypted_partial = self.aesfunc.encrypt(partial_plainmessage)
+                ciphertext_message += encrypted_partial
+            dict_msg = {'e':ciphertext_message,'h':hash_msg.hexdigest()}
+            json_msg = pickle.dumps(dict_msg)
+            # self.s.send(ciphertext_message.encode('utf-8'))
+            self.s.send(json_msg)
+
         else:
             print("Enter Shared Value first")
 
+    # send dictionary with md5 also for tamper flag
 
-shared_secret_value = input("Enter Shared Secret Value:") #p
+
+shared_secret_value = input("Enter Shared Secret Value:")
 client = Client(shared_secret_value)
 client.authenticate()
-# while True:
 communicate_thread = Thread(target=client.communicate)
 communicate_thread.start()
-# client.communicate()
-# client.s.close()
 while True:
+    # client.communicate()
     message = input("Enter message:")
     client.send_encrypted(message)
 

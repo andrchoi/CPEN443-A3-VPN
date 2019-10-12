@@ -23,21 +23,21 @@ class DH_Endpoint(object):
         full_key = partial_key_r**self.private_key
         full_key = full_key%self.public_key2
         self.full_key = full_key
-        return full_key
+        return str(full_key)
     
-    def encrypt_message(self, message):
-        encrypted_message = "" #in form of a string 
-        key = self.full_key
-        for c in message:
-            encrypted_message += chr(ord(c)+key) #simple encryption by adding key to ASCII value of character
-        return encrypted_message
-    
-    def decrypt_message(self, encrypted_message):
-        decrypted_message = ""
-        key = self.full_key
-        for c in encrypted_message:
-            decrypted_message += chr(ord(c)-key)
-        return decrypted_message
+    # def encrypt_message(self, message):
+    #     encrypted_message = "" #in form of a string
+    #     key = self.full_key
+    #     for c in message:
+    #         encrypted_message += chr(ord(c)+key) #simple encryption by adding key to ASCII value of character
+    #     return encrypted_message
+    #
+    # def decrypt_message(self, encrypted_message):
+    #     decrypted_message = ""
+    #     key = self.full_key
+    #     for c in encrypted_message:
+    #         decrypted_message += chr(ord(c)-key)
+    #     return decrypted_message
 
 if __name__ == "__main__":
     zach = DH_Endpoint(1294,79)
