@@ -23,7 +23,7 @@ class DH_Endpoint(object):
         full_key = partial_key_r**self.private_key
         full_key = full_key%self.public_key2
         self.full_key = full_key
-        return str(full_key)
+        return str(full_key**8)
     
     # def encrypt_message(self, message):
     #     encrypted_message = "" #in form of a string
@@ -46,6 +46,6 @@ if __name__ == "__main__":
     alex_pk = alex.generate_partial_key()
     full_key = zach.generate_full_key(alex_pk)
     full_key = alex.generate_full_key(zach_pk)
-    zach_em = zach.encrypt_message("hello alex i am doing good help me do my 432 writeen adssignment")
+    zach_em = zach.encrypt_message("hello alex")
     alex_dm = alex.decrypt_message(zach_em)
     print(alex_dm)
