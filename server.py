@@ -28,7 +28,8 @@ import dh_algo
 import sympy
 import aes_algo
 from threading import Thread
-
+import hashlib
+import pickle
 
 sharedSecret = ''
 
@@ -41,7 +42,7 @@ def get_portnum():
     portnum = int(portnum)
     return portnum
 
-PORT = 2003
+PORT = 2007
 #import updateGUI
 
 class Server(dh_algo.DH_Endpoint):
@@ -89,7 +90,9 @@ class Server(dh_algo.DH_Endpoint):
                 print('no data')
                 # break # at s.close on the connection it closes
             else:
-                decoded_data = data.decode('utf-8')
+                dict_msg = pickle.loads(data)
+                decoded_data = dict_msg.get('e')
+                hash_msg = dict_msg.get('h')
                 iterations_decrypt = len(decoded_data) // 16
                 padded_plaintext_message = ""
                 for i in range(iterations_decrypt):
@@ -97,11 +100,18 @@ class Server(dh_algo.DH_Endpoint):
                     decrypted_partial = self.aesfunc.decrypt(partial_ciphermessage)
                     padded_plaintext_message += decrypted_partial
                 padding_stops = padded_plaintext_message.index("1")
-                # print(decoded_data)
                 print(padded_plaintext_message[padding_stops + 1:])
+                hashed_aes = hashlib.md5(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
+                # print('hash is {}'.format(hash_msg))
+                # print('aes is {}'.format(hashed_aes))
+                if hashed_aes.hexdigest() == hash_msg:
+                    print("Message integrity confirmed")
+                else:
+                    print("Message tampered")
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
+            hash_msg = hashlib.md5(message.encode('utf-8'))
             zeroes_req = 15 - len(message) % 16
             padded_message = "0" * zeroes_req + "1" + message
             iterations_encrypt = len(padded_message) // 16
@@ -110,9 +120,10 @@ class Server(dh_algo.DH_Endpoint):
                 partial_plainmessage = padded_message[i * 16:i * 16 + 16]
                 encrypted_partial = self.aesfunc.encrypt(partial_plainmessage)
                 ciphertext_message += encrypted_partial
-            self.conn.send(ciphertext_message.encode('utf-8'))
-        else:
-            print("Enter Shared Value first")
+            dict_msg = {'e':ciphertext_message,'h':hash_msg.hexdigest()}
+            json_msg = pickle.dumps(dict_msg)
+            # self.s.send(ciphertext_message.encode('utf-8'))
+            self.conn.send(json_msg)
 
 shared_secret_value = input("Enter Shared Secret Value:") #p
 server = Server(shared_secret_value)
