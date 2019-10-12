@@ -12,7 +12,8 @@ def setSecret(value):
     global sharedSecret
     sharedSecret = value
 
-HOST = 'localhost'
+#host ip to be changed
+HOST = '192.168.0.111'
 PORT = 2003
 
 class Client(dh_algo.DH_Endpoint):
