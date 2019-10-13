@@ -43,7 +43,6 @@ def nextStep():
     print('stepping')
 
 def executeFull():
-    #TODO:
     sendData()
     print('running')
 
