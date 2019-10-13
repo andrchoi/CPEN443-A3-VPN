@@ -46,6 +46,14 @@ def executeFull():
     sendData()
     print('running')
 
+def closeConnection():
+    if inClientMode:
+        root.quit()
+        client.closeConnection()
+    else:
+        root.quit()
+        server.closeConnection()
+
 
 # initialize GUI area
 root = Tk()
@@ -121,5 +129,9 @@ statusText = StringVar()
 statusText.set('program state')
 status = Label(root, textvariable=statusText)
 status.pack()
+
+# disconnect
+closeButton = Button(root, text='Close And Quit', command=closeConnection)
+closeButton.pack()
 
 root.mainloop()

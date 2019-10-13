@@ -111,6 +111,10 @@ class Client(dh_algo.DH_Endpoint):
             print("Please enter Shared Secret Value first.")
             stepThrough("Please enter Shared Secret Value first.")
 
+    def closeConn(self):
+        print('closing client')
+        self.s.close()
+
     # send dictionary with md5 also for tamper flag
 
 
@@ -127,6 +131,7 @@ class Client(dh_algo.DH_Endpoint):
 client = None
 recText = None
 status = None
+comm = None
 
 def connectClient(sharedSecret, host, isIPaddr, port):
 
@@ -143,6 +148,9 @@ def connectClient(sharedSecret, host, isIPaddr, port):
     communicate_thread = Thread(target=client.communicate)
     communicate_thread.start()
 
+    global comm 
+    comm = communicate_thread
+
 def encryptAndSend(message):
     global client    
     client.send_encrypted(message)
@@ -152,6 +160,10 @@ def getUIFields(recieved, state):
     global status
     recText = recieved
     status = state
+
+def closeConnection():
+    global client
+    client.closeConn
 
 def stepThrough(message):
     global status

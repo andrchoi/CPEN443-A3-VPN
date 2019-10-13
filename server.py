@@ -31,17 +31,6 @@ from threading import Thread
 import hashlib
 import pickle
 
-sharedSecret = ''
-
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-
-def get_portnum():
-    portnum = input("Please enter Port Number: ")
-    portnum = int(portnum)
-    return portnum
-
 PORT = 2008
 
 class Server(dh_algo.DH_Endpoint):
@@ -139,6 +128,10 @@ class Server(dh_algo.DH_Endpoint):
             self.conn.send(json_msg)
             print("(System) Encrypted message has been sent.\n")
             stepThrough("(System) Encrypted message has been sent.\n")
+    
+    def closeConn(self):
+        print('server close')
+        self.s.close()
 
 #shared_secret_value = input("Please enter 3-digit Shared Secret Value: ") #p
 # server = Server(shared_secret_value)
@@ -156,6 +149,9 @@ def openServer(sharedSecret, port):
     communicate_thread = Thread(target=server.communicate)
     communicate_thread.start()
 
+    global comm
+    comm = communicate_thread
+
 def encryptAndSend(message):
     global server
     server.send_encrypted(message)
@@ -165,6 +161,10 @@ def getUIFields(recieved, state):
     global status
     recText = recieved
     status = state
+
+def closeConnection():
+    global server
+    server.closeConn()
 
 def stepThrough(message):
     global status
@@ -179,3 +179,4 @@ def stepThrough(message):
 server = None
 recText = None
 status = None
+comm = None
