@@ -30,6 +30,7 @@ import aes_algo
 from threading import Thread
 import hashlib
 import pickle
+import time
 
 PORT = 2008
 
@@ -45,14 +46,16 @@ class Server(dh_algo.DH_Endpoint):
         self.conn, addr = self.s.accept()
         self.aesfunc = None
         print('(System) Connected by: ', addr)
-        msg = '(System) Connected by: ', addr
-        stepThrough(msg)
 
     def authenticate(self): # listen and print out messages
-        partial_key = self.generate_partial_key()
-        self.conn.send(bytes([partial_key]))
         while True:
             data = self.conn.recv(1024) # Limit message size to 1024 bytes?
+            stepThrough(data, 'Recieved partial key')
+            
+            partial_key = self.generate_partial_key()
+            self.conn.send(bytes([partial_key]))
+            stepThrough(partial_key, 'Send Partial Key')
+            
             if not data: # At end of message break
                 break # at s.close on the connection it closes
             try:
@@ -68,20 +71,17 @@ class Server(dh_algo.DH_Endpoint):
                 # print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("(System) Server symmetric key (" + full_key + ") has been created.\n")
-                msg = "(System) Server symmetric key (" + full_key + ") has been created.\n"
-                stepThrough(msg)
+                stepThrough(full_key, 'Generated Symmetric Key')
                 self.aesfunc = aes_algo.Rijndael(full_key)
                 break
             except:
                 print("Error.")
-                stepThrough("Error.")
     
     def communicate(self):
         while True:
             data = self.conn.recv(1024) # Limit message size to 1024 bytes?
             if not data: # At end of message break
                 print('no data')
-                stepThrough('no data')
 
                 # break # at s.close on the connection it closes
             else:
@@ -98,6 +98,7 @@ class Server(dh_algo.DH_Endpoint):
 
                 #update UI
                 recText.set(padded_plaintext_message[padding_stops + 1:])
+                stepThrough(padded_plaintext_message[padding_stops + 1:], 'Received')
 
                 print(padded_plaintext_message[padding_stops + 1:])
                 hashed_aes = hashlib.md5(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
@@ -105,10 +106,8 @@ class Server(dh_algo.DH_Endpoint):
                 # print('aes is {}'.format(hashed_aes))
                 if hashed_aes.hexdigest() == hash_msg:
                     print("(System) Message integrity has been confirmed.\n")
-                    stepThrough("(System) Message integrity has been confirmed.\n")
                 else:
                     print("(System) Message integrity has been compromised.\n")
-                    stepThrough("(System) Message integrity has been compromised.\n")
 
     
     def send_encrypted(self, message):
@@ -126,24 +125,27 @@ class Server(dh_algo.DH_Endpoint):
             json_msg = pickle.dumps(dict_msg)
             # self.s.send(ciphertext_message.encode('utf-8'))
             self.conn.send(json_msg)
+            stepThrough(json_msg, 'Send encrypted')
             print("(System) Encrypted message has been sent.\n")
-            stepThrough("(System) Encrypted message has been sent.\n")
     
     def closeConn(self):
         print('server close')
         self.s.close()
 
-#shared_secret_value = input("Please enter 3-digit Shared Secret Value: ") #p
-# server = Server(shared_secret_value)
-# server.authenticate()
-# communicate_thread = Thread(target=server.communicate)
-# communicate_thread.start()
-# while True:
-#     message = input()
-#     server.send_encrypted(message)
+server = None
+recText = None
+status = None
+comm = None
+willStep = False
+inputWait = False
+window = None
 
-def openServer(sharedSecret, port):
+def openServer(sharedSecret, port, isStepping):
     global server
+    global willStep
+    willStep = isStepping
+
+    stepThrough('Open Server Connection', 'Stepping')
     server = Server(sharedSecret, port)
     server.authenticate()
     communicate_thread = Thread(target=server.communicate)
@@ -153,12 +155,15 @@ def openServer(sharedSecret, port):
     comm = communicate_thread
 
 def encryptAndSend(message):
-    global server
+    global willStep
+    willStep = False
     server.send_encrypted(message)
 
-def getUIFields(recieved, state):
+def getUIFields(recieved, state, ui):
     global recText
     global status
+    global window
+    window = ui
     recText = recieved
     status = state
 
@@ -166,17 +171,17 @@ def closeConnection():
     global server
     server.closeConn()
 
-def stepThrough(message):
+def stepThrough(message, line):
     global status
-    status.set(message)
+    global window
+    res = line + ': ' + str(message)
+    status.set(res)
 
+    window.update()
     # TODO:
-    willStep = True
+    global willStep
     if willStep:
-        print('need to wait for input')
-    
-
-server = None
-recText = None
-status = None
-comm = None
+        global inputWait
+        inputWait = True
+        print('need to wait for input', line)
+        window.after(5000)

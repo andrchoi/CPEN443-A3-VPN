@@ -7,44 +7,36 @@ def switchMode():
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
         hostDetails.config(state='disabled')
+        hostField.config(state='disabled')
         nameOrIP.config(state='disabled')
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
         hostDetails.config(state='active')
+        hostField.config(state='active')
         nameOrIP.config(state='active')
         inClientMode= True
     print('switching', inClientMode)
 
 def connectStep():
-    #TODO:
-    connectSubmit()
-    print('step')
+    connect(True)
 
 def connectSubmit():
+    connect(False)
+
+def connect(willStep):
     if inClientMode:
-        client.getUIFields(recText, statusText)
-        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()))
+        client.getUIFields(recText, statusText, root)
+        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()), willStep)
     else: 
-        server.getUIFields(recText, statusText)
-        server.openServer(int(ss_field.get()), int(portField.get()))
-    #print(hostField.get(), nameIPState.get(), portField.get())
+        server.getUIFields(recText, statusText, root)
+        server.openServer(int(ss_field.get()), int(portField.get()), willStep)
 
 def sendData():
     if inClientMode:
         client.encryptAndSend(sendField.get())
     else:
         server.encryptAndSend(sendField.get())
-    print(sendField.get())
-
-def nextStep():
-    #TODO:
-    sendData()
-    print('stepping')
-
-def executeFull():
-    sendData()
-    print('running')
 
 def closeConnection():
     if inClientMode:
@@ -112,16 +104,13 @@ sendField.pack()
 recLabel = Label(root, text="Received data: ")
 recText = StringVar()
 recData = Entry(root, textvariable=recText)
+recLabel.config(state='disabled')
 
 recLabel.pack()
 recData.pack()
 
-# Continue button
-continueButton = Button(root, text='Step Through Send', command=nextStep)
-continueButton.pack()
-
 # Automatic Run
-runButton = Button(root, text='Send Automatically', command=executeFull)
+runButton = Button(root, text='Send Data', command=sendData)
 runButton.pack()
 
 # program status
