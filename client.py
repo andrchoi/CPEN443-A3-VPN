@@ -6,14 +6,8 @@ import aes_algo
 from threading import Thread
 import hashlib
 import pickle
-
-
-sharedSecret = ''
-
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-
+import ipaddress
+import struct
 
 HOST = 'localhost'
 PORT = 2008
@@ -28,10 +22,10 @@ class Client(dh_algo.DH_Endpoint):
         self.aesfunc = None
 
 
-    def authenticate(self): # sends the partial key
+    def authenticate(self, host, port): # sends the partial key
         partial_key = self.generate_partial_key()
         s = self.s
-        s.connect((HOST, PORT)) #HOST, PORT of client
+        s.connect((host, port)) #HOST, PORT of client
         s.send(bytes([partial_key]))
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
@@ -50,10 +44,13 @@ class Client(dh_algo.DH_Endpoint):
                 # print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("(System) Client symmetric key (" + full_key + ") has been created.\n")
+                msg = "(System) Client symmetric key (" + full_key + ") has been created.\n"
+                stepThrough(msg)
                 self.aesfunc = aes_algo.Rijndael(full_key)
                 break
             except:
                 print("Error.")
+                stepThrough("Error.")
                 # s.close()
                 # print(self.decrypt_message(data.decode('utf-8')))
     
@@ -75,15 +72,22 @@ class Client(dh_algo.DH_Endpoint):
                     decrypted_partial = self.aesfunc.decrypt(partial_ciphermessage)
                     padded_plaintext_message += decrypted_partial
                 padding_stops = padded_plaintext_message.index("1")
+
+                # update UI
+                recText.set(padded_plaintext_message[padding_stops + 1:])
+
                 # print(decoded_data)
                 print(padded_plaintext_message[padding_stops + 1:])
+                stepThrough(padded_plaintext_message[padding_stops + 1:])
                 hashed_aes = hashlib.md5(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
                 # print('hash is {}'.format(hash_msg))
                 # print('aes is {}'.format(hashed_aes))
                 if hashed_aes.hexdigest() == hash_msg:
                     print("(System) Message integrity has been confirmed.\n")
+                    stepThrough("(System) Message integrity has been confirmed.\n")
                 else:
                     print("(System) Message integrity has been compromised.\n")
+                    stepThrough("(System) Message integrity has been compromised.\n")
 
     def send_encrypted(self, message):
         if self.flag_generated_key:
@@ -101,29 +105,59 @@ class Client(dh_algo.DH_Endpoint):
             # self.s.send(ciphertext_message.encode('utf-8'))
             self.s.send(json_msg)
             print("(System) Encrypted message has been sent.\n")
+            stepThrough("(System) Encrypted message has been sent.\n")
 
         else:
             print("Please enter Shared Secret Value first.")
+            stepThrough("Please enter Shared Secret Value first.")
 
     # send dictionary with md5 also for tamper flag
 
 
-shared_secret_value = input("Please enter 3-digit Shared Secret Value: ")
-client = Client(shared_secret_value)
-client.authenticate()
-communicate_thread = Thread(target=client.communicate)
-communicate_thread.start()
-while True:
-    # client.communicate()
-    message = input()
-    client.send_encrypted(message)
+# shared_secret_value = input("Please enter 3-digit Shared Secret Value: ")
+# client = Client(shared_secret_value)
+# client.authenticate()
+# communicate_thread = Thread(target=client.communicate)
+# communicate_thread.start()
+# while True:
+#     # client.communicate()
+#     message = input()
+#     client.send_encrypted(message)
+
+client = None
+recText = None
+status = None
 
 def connectClient(sharedSecret, host, isIPaddr, port):
+
+    hostInfo = host
+    if isIPaddr == 1:
+        # host is an IP address
+        packedIP = socket.inet_aton(host)
+        numIP = struct.unpack("!L", packedIP)[0]
+        hostInfo = str(ipaddress.ip_address(numIP))
+
     global client
     client = Client(sharedSecret)
-    partial_key = client.generate_partial_key()
-    client.send(host, port, partial_key)
+    client.authenticate(hostInfo, port)
+    communicate_thread = Thread(target=client.communicate)
+    communicate_thread.start()
 
-def encryptAndSend(server, message):
-    global client
+def encryptAndSend(message):
+    global client    
     client.send_encrypted(message)
+
+def getUIFields(recieved, state):
+    global recText
+    global status
+    recText = recieved
+    status = state
+
+def stepThrough(message):
+    global status
+    status.set(message)
+
+    # TODO:
+    willStep = True
+    if willStep:
+        print('need to wait for input')

@@ -3,7 +3,6 @@ import server
 import client
 
 def switchMode():
-    #TODO: implement ui switching
     global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
@@ -19,33 +18,33 @@ def switchMode():
 
 def connectStep():
     #TODO:
+    connectSubmit()
     print('step')
 
 def connectSubmit():
-    #TODO:
-    print(inClientMode)
-    
     if inClientMode:
+        client.getUIFields(recText, statusText)
         client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()))
     else: 
+        server.getUIFields(recText, statusText)
         server.openServer(int(ss_field.get()), int(portField.get()))
-
-    print(hostField.get(), nameIPState.get(), portField.get())
+    #print(hostField.get(), nameIPState.get(), portField.get())
 
 def sendData():
-    #TODO:
     if inClientMode:
-        print('send client')
+        client.encryptAndSend(sendField.get())
     else:
         server.encryptAndSend(sendField.get())
     print(sendField.get())
 
 def nextStep():
     #TODO:
+    sendData()
     print('stepping')
 
 def executeFull():
     #TODO:
+    sendData()
     print('running')
 
 
@@ -90,10 +89,10 @@ ss_field.pack()
 
 # submit connection details
 connectStep = Button(root, text='Step Through Connection', command=connectStep)
-connectSubmit = Button(root, text='Submit Connection Details', command=connectSubmit)
+connectButton = Button(root, text='Submit Connection Details', command=connectSubmit)
 
 connectStep.pack()
-connectSubmit.pack()
+connectButton.pack()
 
 # data to send
 sendLabel = Label(root, text="Data to send: ")
