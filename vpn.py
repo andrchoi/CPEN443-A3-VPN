@@ -3,50 +3,48 @@ import server
 import client
 
 def switchMode():
-    #TODO: implement ui switching
     global inClientMode
     if 'client' in modeLabel["text"]:
         modeLabel.config(text = "VPN in server mode")
         hostDetails.config(state='disabled')
+        hostField.config(state='disabled')
         nameOrIP.config(state='disabled')
         inClientMode = False
     else:
         modeLabel.config(text = "VPN in client mode")
         hostDetails.config(state='active')
+        hostField.config(state='active')
         nameOrIP.config(state='active')
         inClientMode= True
     print('switching', inClientMode)
 
 def connectStep():
-    #TODO:
-    print('step')
+    connect(True)
 
 def connectSubmit():
-    #TODO:
-    print(inClientMode)
-    
-    if inClientMode:
-        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()))
-    else: 
-        server.openServer(int(ss_field.get()), int(portField.get()))
+    connect(False)
 
-    print(hostField.get(), nameIPState.get(), portField.get())
+def connect(willStep):
+    if inClientMode:
+        client.getUIFields(recText, statusText, root)
+        client.connectClient(int(ss_field.get()), hostField.get(), nameIPState.get(), int(portField.get()), willStep)
+    else: 
+        server.getUIFields(recText, statusText, root)
+        server.openServer(int(ss_field.get()), int(portField.get()), willStep)
 
 def sendData():
-    #TODO:
     if inClientMode:
-        print('send client')
+        client.encryptAndSend(sendField.get())
     else:
         server.encryptAndSend(sendField.get())
-    print(sendField.get())
 
-def nextStep():
-    #TODO:
-    print('stepping')
-
-def executeFull():
-    #TODO:
-    print('running')
+def closeConnection():
+    if inClientMode:
+        root.quit()
+        client.closeConnection()
+    else:
+        root.quit()
+        server.closeConnection()
 
 
 # initialize GUI area
@@ -90,10 +88,10 @@ ss_field.pack()
 
 # submit connection details
 connectStep = Button(root, text='Step Through Connection', command=connectStep)
-connectSubmit = Button(root, text='Submit Connection Details', command=connectSubmit)
+connectButton = Button(root, text='Submit Connection Details', command=connectSubmit)
 
 connectStep.pack()
-connectSubmit.pack()
+connectButton.pack()
 
 # data to send
 sendLabel = Label(root, text="Data to send: ")
@@ -106,16 +104,13 @@ sendField.pack()
 recLabel = Label(root, text="Received data: ")
 recText = StringVar()
 recData = Entry(root, textvariable=recText)
+recLabel.config(state='disabled')
 
 recLabel.pack()
 recData.pack()
 
-# Continue button
-continueButton = Button(root, text='Step Through Send', command=nextStep)
-continueButton.pack()
-
 # Automatic Run
-runButton = Button(root, text='Send Automatically', command=executeFull)
+runButton = Button(root, text='Send Data', command=sendData)
 runButton.pack()
 
 # program status
@@ -123,5 +118,9 @@ statusText = StringVar()
 statusText.set('program state')
 status = Label(root, textvariable=statusText)
 status.pack()
+
+# disconnect
+closeButton = Button(root, text='Close And Quit', command=closeConnection)
+closeButton.pack()
 
 root.mainloop()

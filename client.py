@@ -6,14 +6,9 @@ import aes_algo
 from threading import Thread
 import hashlib
 import pickle
-
-
-sharedSecret = ''
-
-def setSecret(value):
-    global sharedSecret
-    sharedSecret = value
-
+import ipaddress
+import struct
+import time
 
 HOST = 'localhost'
 PORT = 2008
@@ -28,13 +23,15 @@ class Client(dh_algo.DH_Endpoint):
         self.aesfunc = None
 
 
-    def authenticate(self): # sends the partial key
+    def authenticate(self, host, port): # sends the partial key
         partial_key = self.generate_partial_key()
         s = self.s
-        s.connect((HOST, PORT)) #HOST, PORT of client
+        s.connect((host, port)) #HOST, PORT of client
         s.send(bytes([partial_key]))
+        stepThrough(partial_key, 'Send Partial Key')
         while True:
             data = s.recv(1024) # Limit message size to 1024 bytes?
+            stepThrough(data, 'Recieved partial key')
             if not data: # At end of message break
                 break
             try:
@@ -50,6 +47,7 @@ class Client(dh_algo.DH_Endpoint):
                 # print("Full key is {}".format(full_key))
                 self.flag_generated_key = True
                 print("(System) Client symmetric key (" + full_key + ") has been created.\n")
+                stepThrough(full_key, 'Generated Symmetric Key')
                 self.aesfunc = aes_algo.Rijndael(full_key)
                 break
             except:
@@ -75,6 +73,11 @@ class Client(dh_algo.DH_Endpoint):
                     decrypted_partial = self.aesfunc.decrypt(partial_ciphermessage)
                     padded_plaintext_message += decrypted_partial
                 padding_stops = padded_plaintext_message.index("1")
+
+                # update UI
+                recText.set(padded_plaintext_message[padding_stops + 1:])
+                stepThrough(padded_plaintext_message[padding_stops + 1:], 'Received')
+
                 # print(decoded_data)
                 print(padded_plaintext_message[padding_stops + 1:])
                 hashed_aes = hashlib.sha3_256(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
@@ -100,30 +103,73 @@ class Client(dh_algo.DH_Endpoint):
             json_msg = pickle.dumps(dict_msg)
             # self.s.send(ciphertext_message.encode('utf-8'))
             self.s.send(json_msg)
+            stepThrough(json_msg, 'Send encrypted')
             print("(System) Encrypted message has been sent.\n")
 
         else:
             print("Please enter Shared Secret Value first.")
 
-    # send dictionary with md5 also for tamper flag
+    def closeConn(self):
+        print('closing client')
+        self.s.close()
 
+client = None
+recText = None
+status = None
+comm = None
+willStep = False
+inputWait = False
 
-shared_secret_value = input("Please enter 3-digit Shared Secret Value: ")
-client = Client(shared_secret_value)
-client.authenticate()
-communicate_thread = Thread(target=client.communicate)
-communicate_thread.start()
-while True:
-    # client.communicate()
-    message = input()
-    client.send_encrypted(message)
-
-def connectClient(sharedSecret, host, isIPaddr, port):
+def connectClient(sharedSecret, host, isIPaddr, port, isStepping):
     global client
+    global willStep
+    willStep = isStepping
+
+    stepThrough('Start Connecting', 'Stepping')
+
+    hostInfo = host
+    if isIPaddr == 1:
+        # host is an IP address
+        packedIP = socket.inet_aton(host)
+        numIP = struct.unpack("!L", packedIP)[0]
+        hostInfo = str(ipaddress.ip_address(numIP))
+
     client = Client(sharedSecret)
-    partial_key = client.generate_partial_key()
-    client.send(host, port, partial_key)
+    client.authenticate(hostInfo, port)
+    communicate_thread = Thread(target=client.communicate)
+    communicate_thread.start()
 
-def encryptAndSend(server, message):
-    global client
+    global comm 
+    comm = communicate_thread
+
+def encryptAndSend(message):
+    global willStep
+    willStep = False    
     client.send_encrypted(message)
+
+def getUIFields(recieved, state, ui):
+    global recText
+    global status
+    global window
+    window = ui
+    recText = recieved
+    status = state
+
+def closeConnection():
+    global client
+    client.closeConn
+
+def stepThrough(message, line):
+    global status
+    global window
+    res = line + ': ' + str(message)
+    status.set(res)
+
+    window.update()
+    # TODO:
+    global willStep
+    if willStep:
+        global inputWait
+        inputWait = True
+        print('need to wait for input', line)
+        window.after(5000)
