@@ -101,7 +101,7 @@ class Server(dh_algo.DH_Endpoint):
                     padded_plaintext_message += decrypted_partial
                 padding_stops = padded_plaintext_message.index("1")
                 print(padded_plaintext_message[padding_stops + 1:])
-                hashed_aes = hashlib.md5(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
+                hashed_aes = hashlib.sha3_256(padded_plaintext_message[padding_stops + 1:].encode('utf-8'))
                 # print('hash is {}'.format(hash_msg))
                 # print('aes is {}'.format(hashed_aes))
                 if hashed_aes.hexdigest() == hash_msg:
@@ -111,7 +111,7 @@ class Server(dh_algo.DH_Endpoint):
     
     def send_encrypted(self, message):
         if self.flag_generated_key:
-            hash_msg = hashlib.md5(message.encode('utf-8'))
+            hash_msg = hashlib.sha3_256(message.encode('utf-8'))
             zeroes_req = 15 - len(message) % 16
             padded_message = "0" * zeroes_req + "1" + message
             iterations_encrypt = len(padded_message) // 16
